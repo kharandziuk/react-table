@@ -6,7 +6,7 @@ var gulp = require('gulp'),
 
 
 var paths = {
-    srcJs: ['./main.coffee'],
+    srcJs: ['./main.js'],
     js: ['./bundle.js']
 }
 
