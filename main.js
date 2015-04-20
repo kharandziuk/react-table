@@ -51,17 +51,17 @@ class Table extends React.Component {
       super(props);
     }
     render() {
-      console.log(this.props);
+      var {items, changeSortingHandler, sortBy} = this.props;
       return D.table(
         {className: 'table'},
         D.thead(
           null,
           D.tr(
             null,
-            D.th(null, '#'),
-            D.th(null, 'First Name'),
-            D.th(null, 'Last Name'),
-            D.th(null, 'Phone')
+            D.th({onClick: _.partial(changeSortingHandler, 'id')}, '#'),
+            D.th({onClick: _.partial(changeSortingHandler, 'firstName')}, 'First Name'),
+            D.th({onClick: _.partial(changeSortingHandler, 'lastName')}, 'Last Name'),
+            D.th({onClick: _.partial(changeSortingHandler, 'phone')}, 'Phone')
           )
         ),
         D.tbody(
@@ -89,14 +89,18 @@ class App extends React.Component {
           lastName: '',
           phone: ''
         }),
-        items: IM.List([])
+        items: IM.List([]),
+        sortBy: IM.List([])
       };
     }
     submitHandler(e) {
       e.preventDefault();
       this.setState(function(prevState) {
         var {form, items} = prevState;
-        return _.extend(prevState, {items: prevState.items.push(form)});
+        return _.extend(prevState, {
+          items: items.push(form),
+          form: form.clear()
+        });
       });
     }
     changeInputHandler(propName, e) {
@@ -106,18 +110,26 @@ class App extends React.Component {
         return _.extend(prevState, {form: newForm});
       });
     }
+    changeSortingHandler(key) {
+      alert(key);
+      return
+    }
     render() {
       return D.div(
-          {className: 'container'},
-          D.div(
-            {className: 'col-lg-offset-3 col-lg-6'},
-            React.createElement(Form, {
-              form: this.state.form,
-              submitHandler: this.submitHandler.bind(this),
-              changeInputHandler: this.changeInputHandler.bind(this)
-            }),
-            React.createElement(Table, {items: this.state.items})
-          )
+        {className: 'container'},
+        D.div(
+          {className: 'col-lg-offset-3 col-lg-6'},
+          React.createElement(Form, {
+            form: this.state.form,
+            submitHandler: this.submitHandler.bind(this),
+            changeInputHandler: this.changeInputHandler.bind(this)
+          }),
+          React.createElement(Table, {
+            items: this.state.items,
+            sortBy: this.state.sortBy,
+            changeSortingHandler: this.changeSortingHandler.bind(this)
+          })
+        )
       );
     }
 }
