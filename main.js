@@ -52,29 +52,56 @@ class Table extends React.Component {
     }
     render() {
       var {items, changeSortingHandler, sortBy} = this.props;
+      var getHeadCell = (key, name) => {
+        if(key === sortBy.get('key')) {
+          var direction = sortBy.get('isAsc') ? 'down' : 'up';
+          var span = D.span({
+            className: `glyphicon glyphicon-chevron-${direction}`
+          });
+          return D.th({onClick: _.partial(changeSortingHandler, key)}, name, span);
+        } else {
+          return D.th({onClick: _.partial(changeSortingHandler, key)}, name);
+        }
+      };
+      // TODO: refactor
+      var sorted = this.props.items.map(
+        (el, i) => _.extend(el.toObject(), {id: i})
+      ).sort(
+        (l, r) => {
+          var {key, isAsc} = sortBy.toObject(),
+              res,
+              mul = isAsc ? 1 : -1;
+          if (l[key] > r[key]) { res = 1; }
+          else if (l[key] === r[key]) { res = 0; }
+          else { res = -1; }
+          console.log(res* mul);
+          return res * mul;
+        }
+      );
+      var rows = sorted.map((el) => {
+          return D.tr(
+            {key: el.id},
+            D.th({scope: 'row'}, el.id),
+            D.td(null, el.firstName),
+            D.td(null, el.lastName),
+            D.td(null, el.phone)
+          );
+      });
       return D.table(
         {className: 'table'},
         D.thead(
           null,
           D.tr(
             null,
-            D.th({onClick: _.partial(changeSortingHandler, 'id')}, '#'),
-            D.th({onClick: _.partial(changeSortingHandler, 'firstName')}, 'First Name'),
-            D.th({onClick: _.partial(changeSortingHandler, 'lastName')}, 'Last Name'),
-            D.th({onClick: _.partial(changeSortingHandler, 'phone')}, 'Phone')
+            getHeadCell('id', '#'),
+            getHeadCell('firstName', 'First Name'),
+            getHeadCell('lastName', 'Last Name'),
+            getHeadCell('phone', 'Phone')
           )
         ),
         D.tbody(
           null,
-          this.props.items.map(function(el, i) {
-            return D.tr(
-              null,
-              D.th({scope: 'row'}, i),
-              D.td(null, el.get('firstName')),
-              D.td(null, el.get('lastName')),
-              D.td(null, el.get('phone'))
-            );
-          })
+          rows
         )
       );
     }
@@ -89,8 +116,17 @@ class App extends React.Component {
           lastName: '',
           phone: ''
         }),
-        items: IM.List([]),
-        sortBy: IM.List([])
+        items: IM.fromJS([1, 2, 3].map((el) => {
+          return {
+            firstName: 'firstName' + el,
+            lastName: 'lastName' + el,
+            phone: 'phone' + el
+          };
+        })),
+        sortBy: IM.Map({
+          key: 'id',
+          isAsc: true
+        })
       };
     }
     submitHandler(e) {
@@ -111,8 +147,15 @@ class App extends React.Component {
       });
     }
     changeSortingHandler(key) {
-      alert(key);
-      return
+      this.setState(function(prevState) {
+        var {sortBy} = prevState;
+        if (key === sortBy.get('key')) {
+          sortBy = sortBy.update('isAsc', val => !val);
+        } else {
+          sortBy = sortBy.merge({key, isAsc:true});
+        }
+        return _.extend(prevState, {sortBy});
+      });
     }
     render() {
       return D.div(
