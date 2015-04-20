@@ -51,7 +51,7 @@ class Table extends React.Component {
       super(props);
     }
     render() {
-      var {items, changeSortingHandler, sortBy} = this.props;
+      var {items, changeSortingHandler, sortBy, removeHandler} = this.props;
       var getHeadCell = (key, name) => {
         if(key === sortBy.get('key')) {
           var direction = sortBy.get('isAsc') ? 'down' : 'up';
@@ -74,7 +74,6 @@ class Table extends React.Component {
           if (l[key] > r[key]) { res = 1; }
           else if (l[key] === r[key]) { res = 0; }
           else { res = -1; }
-          console.log(res* mul);
           return res * mul;
         }
       );
@@ -84,7 +83,14 @@ class Table extends React.Component {
             D.th({scope: 'row'}, el.id),
             D.td(null, el.firstName),
             D.td(null, el.lastName),
-            D.td(null, el.phone)
+            D.td(null, el.phone),
+            D.td(
+              null,
+              D.span({
+                onClick: _.partial(removeHandler, el.id),
+                className: 'glyphicon glyphicon-remove-sign'
+              })
+            )
           );
       });
       return D.table(
@@ -96,7 +102,8 @@ class Table extends React.Component {
             getHeadCell('id', '#'),
             getHeadCell('firstName', 'First Name'),
             getHeadCell('lastName', 'Last Name'),
-            getHeadCell('phone', 'Phone')
+            getHeadCell('phone', 'Phone'),
+            D.th(null, '')
           )
         ),
         D.tbody(
@@ -157,6 +164,14 @@ class App extends React.Component {
         return _.extend(prevState, {sortBy});
       });
     }
+    removeHandler(i) {
+      console.log(i);
+      this.setState(function(prevState) {
+        var {items} = prevState;
+        items = items.delete(i);
+        return _.extend(prevState, {items});
+      });
+    }
     render() {
       return D.div(
         {className: 'container'},
@@ -170,7 +185,8 @@ class App extends React.Component {
           React.createElement(Table, {
             items: this.state.items,
             sortBy: this.state.sortBy,
-            changeSortingHandler: this.changeSortingHandler.bind(this)
+            changeSortingHandler: this.changeSortingHandler.bind(this),
+            removeHandler: this.removeHandler.bind(this)
           })
         )
       );
