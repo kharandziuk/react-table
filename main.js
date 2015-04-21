@@ -53,15 +53,14 @@ class Table extends React.Component {
     render() {
       var {items, changeSortingHandler, sortBy, removeHandler} = this.props;
       var getHeadCell = (key, name) => {
+        var span;
         if(key === sortBy.get('key')) {
           var direction = sortBy.get('isAsc') ? 'down' : 'up';
-          var span = D.span({
+          span = D.span({
             className: `glyphicon glyphicon-chevron-${direction}`
           });
-          return D.th({onClick: _.partial(changeSortingHandler, key)}, name, span);
-        } else {
-          return D.th({onClick: _.partial(changeSortingHandler, key)}, name);
         }
+        return D.th({onClick: _.partial(changeSortingHandler, key)}, name, span);
       };
       // TODO: refactor
       var sorted = this.props.items.map(
