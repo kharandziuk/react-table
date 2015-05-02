@@ -1,6 +1,9 @@
 var React = require('react/addons'),
     _ = require('underscore'),
-    IM = require('immutable');
+    IM = require('immutable'),
+    log = require('debug')('main');
+
+window.myDebug = require("debug");
 
 var D = React.DOM;
 
@@ -9,38 +12,27 @@ class Form extends React.Component {
     super(props);
   }
   render() {
-    var getBindedInput = (propName) => {
-      return D.input({
-        className: 'form-control',
-        value: this.props.form.get(propName),
-        onChange: _.partial(this.props.changeInputHandler, propName)
-      });
+    var {errors} = this.props;
+    var getFormGroup = (propName, name) => {
+      return D.div(
+        {className: 'form-group'},
+        D.label(null, name),
+        errors.has(propName) ? 
+          D.label({className: 'pull-right'}, errors.get(propName)) : null,
+        D.input({
+          className: 'form-control',
+          value: this.props.form.get(propName),
+          onChange: _.partial(this.props.changeInputHandler, propName)
+        })
+      );
     };
     return D.form(
       {
-        // ugly and 
         onSubmit: this.props.submitHandler.bind(this)
       },
-      D.div(
-        {
-          className: 'form-inline',
-        },
-        D.div(
-          {className: 'form-group'},
-          D.label(null, 'First Name'),
-          getBindedInput('firstName')
-        ),
-        D.div(
-            {className: 'form-group'},
-            D.label(null, 'Last Name'),
-            getBindedInput('lastName')
-        )
-      ),
-      D.div(
-          {className: 'form-group'},
-          D.label(null, 'Phone'),
-          getBindedInput('phone')
-      ),
+      getFormGroup('firstName', 'First Name'),
+      getFormGroup('lastName', 'Last Name'),
+      getFormGroup('phone', 'Phone'),
       D.button({type: 'submit', className: 'btn btn-default'}, 'Submit')
     );
   }
@@ -132,18 +124,45 @@ class App extends React.Component {
         sortBy: IM.Map({
           key: 'id',
           isAsc: true
-        })
+        }),
+        errors: IM.Map()
       };
     }
     submitHandler(e) {
       e.preventDefault();
       this.setState(function(prevState) {
         var {form, items} = prevState;
-        return _.extend(prevState, {
-          items: items.push(form),
-          form: form.clear()
-        });
+        var errors = this.validateNewItem(form);
+        log(errors);
+        if (_.isEmpty(errors)) {
+          return _.extend(prevState, {
+            items: items.push(form),
+            form: form.clear(), 
+            errors: IM.Map()
+          });
+        } else {
+          return _.extend(prevState, {
+            errors: IM.Map(errors)
+          });
+        }
       });
+    }
+    validateNewItem (newItem) {
+      var errors = {};
+      var {firstName, lastName, phone} = newItem.toJS();
+      log(firstName);
+      log(lastName);
+      if (_.isUndefined(firstName) || firstName.length === 0) {
+        errors.firstName = 'This field is required';
+      }
+      if (_.isUndefined(lastName) || lastName.length === 0) {
+        errors.lastName = 'This field is required';
+      }
+      var phoneRegEx = /\+?\(?\d{2,4}\)?[\d\s-]{3,}/;
+      if (phoneRegEx.test(phone)) {
+        errors.phone = 'The phone number is invalid';
+      }
+      return errors;
     }
     changeInputHandler(propName, e) {
       var value = e.target.value;
@@ -164,7 +183,6 @@ class App extends React.Component {
       });
     }
     removeHandler(i) {
-      console.log(i);
       this.setState(function(prevState) {
         var {items} = prevState;
         items = items.delete(i);
@@ -178,6 +196,7 @@ class App extends React.Component {
           {className: 'col-lg-offset-3 col-lg-6'},
           React.createElement(Form, {
             form: this.state.form,
+            errors: this.state.errors,
             submitHandler: this.submitHandler.bind(this),
             changeInputHandler: this.changeInputHandler.bind(this)
           }),
